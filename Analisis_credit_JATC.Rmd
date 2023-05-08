@@ -1,0 +1,212 @@
+---
+title: "Analisis_credito_bonito"
+author: "Javier Alexander Trejo Cortés"
+date: "5/8/2020"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: lumen
+    highlight: tango
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Caso de negocio
+Cierta institución financiera te ha encargado analizar su base de datos referente al otorgamiento de créditos. En una primera etapa de análisis (descriptivo), se requieren los estádisticos básicos y apoyos visuales para identificar posibles PATRONES. En una segunda etapa, se construirá un modelo predictivo que soporte el análisis descriptivo.
+
+```{r}
+library(foreign)
+
+```
+
+#Estadisticos descriptivos
+## Lectura de datos
+```{r}
+##Esta instrucción nos permite descargar los datos en R.
+datacreditos<-read.spss("datacreditos.sav",to.data.frame=TRUE)
+datacreditos
+```
+
+```{r}
+str(datacreditos)
+```
+
+
+##Número de créditos de vehiculos y casas
+
+```{r}
+(lts<- summary.factor(datacreditos$Loan_Type))
+
+
+```
+
+
+
+```{r}
+(lt.car<-lts["Car "])
+(lt.home<-lts["Home"])
+```
+
+
+## Media del ingreso de los clientes 
+```{r}
+
+print("El ingreso promedio es:");(in.mean<- mean(datacreditos$Income))
+print("El ingreso mínimo es:")
+(inc.min <-min(datacreditos$Income))
+print("El ingreso máximo es:")
+(inc.max <-max(datacreditos$Income))
+
+```
+
+
+## Score creditício por género e ingreso
+```{r}
+print("El score crediticio promedio es:")
+(mean.score<- mean(datacreditos$Credit_score))
+print("El score crediticio mínimo es:")
+(min.score <- min(datacreditos$Credit_score))
+print("El score crediticio maximo es:")
+(max.score <- max(datacreditos$Credit_score))
+```
+```{r}
+print("El score crediticio mínimo  por género es:")
+(minsc.gender<- datacreditos[datacreditos$Credit_score==min.score,"Gender"])
+print("El score crediticio máximo por género es:")
+(maxsc.gender<- datacreditos[datacreditos$Credit_score==max.score,"Gender"])
+
+```
+```{r}
+
+(minsc.income<- datacreditos[datacreditos$Credit_score==min.score,"Income"])
+
+(maxsc.income<- datacreditos[datacreditos$Credit_score==max.score, "Income"])
+```
+
+
+```{r}
+(males.creditos<-sum(datacreditos$Gender=="Male  "))
+(female.creditos <- sum(datacreditos$Gender=="Female"))
+```
+
+```{r}
+##utilizamos las funciones "select" y "subset" para seleccionar 2 variables del objeto datacreditos, y crear un subgrupo con dos variables especificando a male
+(males.sc<-subset(datacreditos,Gender=="Male  ",select = c(Credit_score, Gender) ))
+```
+
+
+```{r}
+(female.sc<- subset(datacreditos,Gender=="Female",select = c(Credit_score, Gender)))
+```
+
+
+
+```{r}
+(gender.sc<- subset(datacreditos,select = c(Credit_score,Gender) ))
+```
+
+
+
+```{r}
+(generosc2<- datacreditos[c("Credit_score", "Gender")])
+```
+
+
+
+
+## Porcentaje de buenos créditos de hombres 
+
+```{r}
+
+(males.sc.good<- sum(males.sc$Credit_score>700))
+(perc.males.good <- (males.sc.good/males.creditos))
+```
+
+```{r}
+(female.sc.good<- sum (female.sc$Credit_score>700))
+(perc.females.good <- female.sc.good/female.creditos)
+```
+
+## score crediticio por tipo de prestamo
+```{r}
+(loan.car<-subset(datacreditos, Loan_Type=="Car ",select =  c(Loan_Type,Credit_score)) )
+
+```
+
+```{r}
+(minl.car<- min(loan.car$Credit_score))
+(maxl.car <- max(loan.car$Credit_score))
+(length.car <- sum(loan.car$Loan_Type=="Car "))
+```
+
+
+```{r}
+
+(loan.home <- subset(datacreditos, Loan_Type=="Home", select = c(Loan_Type,Credit_score)))
+```
+
+```{r}
+(minl.home<-min(loan.home$Credit_score))
+(maxl.home<-max(loan.home$Credit_score))
+(length.home <- sum(loan.home$Loan_Type=="Home"))
+(length.creditos <- length.car+ length.home)
+
+```
+
+```{r}
+(great.sc<- sum(datacreditos$Credit_score>700))
+(great.sc.tot<- great.sc/length.creditos)
+#(great.sc.per<- percent(great.sc.tot))
+
+```
+
+
+## score crediticio y nivel academico
+
+```{r}
+(grad.degree<-sum(datacreditos$Degree=="Gradaute"))
+(cs.grad<- subset(datacreditos,Degree=="Gradaute", select = c(Degree, Credit_score)))
+```
+```{r}
+
+(csgrad.fair<-sum(cs.grad$Credit_score>600))
+(pgradcs<-csgrad.fair/grad.degree)
+
+(csgrad.good<-sum(cs.grad$Credit_score>700))##Number of Graduates with credit score > 700
+
+(pgradcs.good<-csgrad.good/grad.degree)
+```
+
+
+
+## porcentaje de hombres en default (1: inclumplimiento, 0:cumplimiento)
+
+```{r}
+(default.tabla.h<- subset(datacreditos,Gender=="Male  ", select = c(Gender,Default)))
+
+(default.tabla.h.v<-sum(default.tabla.h$Default==0))
+(default.tabla.h.v1<-sum(default.tabla.h$Default==1))
+
+```
+
+
+## Porcentajes de mujeres en default
+
+
+```{r}
+(default.tabla.m<- subset(datacreditos,Gender=="Female", select = c(Gender,Default)))
+(default.tabla.m.v<-sum(default.tabla.m$Default==0))
+(default.tabla.m.v1<-sum(default.tabla.m$Default==1))
+```
+
+```{r}
+(default.per.h<-default.tabla.h.v/length.creditos)
+(default.per.m<-default.tabla.m.v/length.creditos)
+(default.per.h1<-default.tabla.h.v1/length.creditos)
+(default.per.m1<-default.tabla.m.v1/length.creditos)
+(default.total <- default.per.h+default.per.m+default.per.h1+default.per.m1)
+```
